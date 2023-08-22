@@ -24,10 +24,20 @@ DEMO = """
 
 def make_averager():
     series = []
+    
+    # variable count is not referenced in the inner function, 
+    # it's just a local variable, not a closure.
+    count = len(series)    
 
     def averager(new_value):
+        # series = [1, 2, 3]
         series.append(new_value)
         total = sum(series)
         return total / len(series)
 
     return averager
+
+avg = make_averager()
+print(avg(10))
+print(avg(11))
+print(avg(12))
