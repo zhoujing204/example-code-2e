@@ -62,3 +62,6 @@ class Vector2d:
     def __bool__(self):
         return bool(abs(self))  # <10>
 # end::VECTOR2D_V0[]
+
+v1 = Vector2d(3, 4)
+print(bytes(v1))
