@@ -1,5 +1,6 @@
+# tag::VECTOR_V5[]
 """
-A multi-dimensional ``Vector`` class, take 3
+A multidimensional ``Vector`` class, take 5
 
 A ``Vector`` is built from an iterable of numbers::
 
@@ -11,7 +12,7 @@ A ``Vector`` is built from an iterable of numbers::
     Vector([0.0, 1.0, 2.0, 3.0, 4.0, ...])
 
 
-Tests with 2-dimensions (same results as ``vector2d_v1.py``)::
+Tests with two dimensions (same results as ``vector2d_v1.py``)::
 
     >>> v1 = Vector([3, 4])
     >>> x, y = v1
@@ -42,7 +43,7 @@ Test of ``.frombytes()`` class method:
     True
 
 
-Tests with 3-dimensions::
+Tests with three dimensions::
 
     >>> v1 = Vector([3, 4, 5])
     >>> x, y, z = v1
@@ -112,7 +113,6 @@ Tests of dynamic attribute access::
     >>> v7.y, v7.z, v7.t
     (1.0, 2.0, 3.0)
 
-
 Dynamic attribute lookup failures::
 
     >>> v7.k
@@ -130,32 +130,71 @@ Dynamic attribute lookup failures::
     AttributeError: 'Vector' object has no attribute 'spam'
 
 
-Tests of preventing attributes from 'a' to 'z'::
+Tests of hashing::
 
-    >>> v1.x = 7
-    Traceback (most recent call last):
-      ...
-    AttributeError: readonly attribute 'x'
-    >>> v1.w = 7
-    Traceback (most recent call last):
-      ...
-    AttributeError: can't set attributes 'a' to 'z' in 'Vector'
+    >>> v1 = Vector([3, 4])
+    >>> v2 = Vector([3.1, 4.2])
+    >>> v3 = Vector([3, 4, 5])
+    >>> v6 = Vector(range(6))
+    >>> hash(v1), hash(v3), hash(v6)
+    (7, 2, 1)
 
-Other attributes can be set::
 
-    >>> v1.X = 'albatross'
-    >>> v1.X
-    'albatross'
-    >>> v1.ni = 'Ni!'
-    >>> v1.ni
-    'Ni!'
+Most hash codes of non-integers vary from a 32-bit to 64-bit CPython build::
 
+    >>> import sys
+    >>> hash(v2) == (384307168202284039 if sys.maxsize > 2**32 else 357915986)
+    True
+
+
+Tests of ``format()`` with Cartesian coordinates in 2D::
+
+    >>> v1 = Vector([3, 4])
+    >>> format(v1)
+    '(3.0, 4.0)'
+    >>> format(v1, '.2f')
+    '(3.00, 4.00)'
+    >>> format(v1, '.3e')
+    '(3.000e+00, 4.000e+00)'
+
+
+Tests of ``format()`` with Cartesian coordinates in 3D and 7D::
+
+    >>> v3 = Vector([3, 4, 5])
+    >>> format(v3)
+    '(3.0, 4.0, 5.0)'
+    >>> format(Vector(range(7)))
+    '(0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0)'
+
+
+Tests of ``format()`` with spherical coordinates in 2D, 3D and 4D::
+
+    >>> format(Vector([1, 1]), 'h')  # doctest:+ELLIPSIS
+    '<1.414213..., 0.785398...>'
+    >>> format(Vector([1, 1]), '.3eh')
+    '<1.414e+00, 7.854e-01>'
+    >>> format(Vector([1, 1]), '0.5fh')
+    '<1.41421, 0.78540>'
+    >>> format(Vector([1, 1, 1]), 'h')  # doctest:+ELLIPSIS
+    '<1.73205..., 0.95531..., 0.78539...>'
+    >>> format(Vector([2, 2, 2]), '.3eh')
+    '<3.464e+00, 9.553e-01, 7.854e-01>'
+    >>> format(Vector([0, 0, 0]), '0.5fh')
+    '<0.00000, 0.00000, 0.00000>'
+    >>> format(Vector([-1, -1, -1, -1]), 'h')  # doctest:+ELLIPSIS
+    '<2.0, 2.09439..., 2.18627..., 3.92699...>'
+    >>> format(Vector([2, 2, 2, 2]), '.3eh')
+    '<4.000e+00, 1.047e+00, 9.553e-01, 7.854e-01>'
+    >>> format(Vector([0, 1, 0, 0]), '0.5fh')
+    '<1.00000, 1.57080, 0.00000, 0.00000>'
 """
 
 from array import array
 import reprlib
 import math
+import functools
 import operator
+import itertools  # <1>
 
 
 class Vector:
@@ -180,7 +219,12 @@ class Vector:
                 bytes(self._components))
 
     def __eq__(self, other):
-        return tuple(self) == tuple(other)
+        return (len(self) == len(other) and
+                all(a == b for a, b in zip(self, other)))
+
+    def __hash__(self):
+        hashes = (hash(x) for x in self)
+        return functools.reduce(operator.xor, hashes, 0)
 
     def __abs__(self):
         return math.hypot(*self)
@@ -198,51 +242,45 @@ class Vector:
         index = operator.index(key)
         return self._components[index]
 
-# tag::VECTOR_V3_GETATTR[]
-    __match_args__ = ('x', 'y', 'z', 't')  # <1>
-    # Set __match_args__ to allow positional pattern matching
-    # on the dynamic attributes x, y, z, and t supported
-    # by __getattr__ below.   
+    __match_args__ = ('x', 'y', 'z', 't')
 
     def __getattr__(self, name):
-        
-        cls = type(self)  # <2>
-        #  Get the Vector class for later use.
-        try:
-            pos = cls.__match_args__.index(name)  # <3>
-            # Try to get the position of name in __match_args__.
-        except ValueError:  # <4>
-            # If name is not found in __match_args__, .index(name)
-            # raises ValueError and set pos to -1.
-            pos = -1
-        if 0 <= pos < len(self._components):  # <5>
-            # If the pos is within range of the available components,
-            # return the component at that position.
-            return self._components[pos]
-        msg = f'{cls.__name__!r} object has no attribute {name!r}'  # <6>
-        # If we get this far, raise AttributeError with a message.
-        raise AttributeError(msg)
-# end::VECTOR_V3_GETATTR[]
-
-# tag::VECTOR_V3_SETATTR[]
-    def __setattr__(self, name, value):
         cls = type(self)
-        if len(name) == 1:  # <1>
-            if name in cls.__match_args__:  # <2>
-                error = 'readonly attribute {attr_name!r}'
-            elif name.islower():  # <3>
-                error = "can't set attributes 'a' to 'z' in {cls_name!r}"
-            else:
-                error = ''  # <4>
-            if error:  # <5>
-                msg = error.format(cls_name=cls.__name__, attr_name=name)
-                raise AttributeError(msg)
-        super().__setattr__(name, value)  # <6>
+        try:
+            pos = cls.__match_args__.index(name)
+        except ValueError:
+            pos = -1
+        if 0 <= pos < len(self._components):
+            return self._components[pos]
+        msg = f'{cls.__name__!r} object has no attribute {name!r}'
+        raise AttributeError(msg)
 
-# end::VECTOR_V3_SETATTR[]
+    def angle(self, n):  # <2>
+        r = math.hypot(*self[n:])
+        a = math.atan2(r, self[n-1])
+        if (n == len(self) - 1) and (self[-1] < 0):
+            return math.pi * 2 - a
+        else:
+            return a
+
+    def angles(self):  # <3>
+        return (self.angle(n) for n in range(1, len(self)))
+
+    def __format__(self, fmt_spec=''):
+        if fmt_spec.endswith('h'):  # hyperspherical coordinates
+            fmt_spec = fmt_spec[:-1]
+            coords = itertools.chain([abs(self)],
+                                     self.angles())  # <4>
+            outer_fmt = '<{}>'  # <5>
+        else:
+            coords = self
+            outer_fmt = '({})'  # <6>
+        components = (format(c, fmt_spec) for c in coords)  # <7>
+        return outer_fmt.format(', '.join(components))  # <8>
 
     @classmethod
     def frombytes(cls, octets):
         typecode = chr(octets[0])
         memv = memoryview(octets[1:]).cast(typecode)
         return cls(memv)
+# end::VECTOR_V5[]

@@ -1,5 +1,5 @@
 """
-A multi-dimensional ``Vector`` class, take 3
+A multi-dimensional ``Vector`` class, take 4
 
 A ``Vector`` is built from an iterable of numbers::
 
@@ -112,7 +112,6 @@ Tests of dynamic attribute access::
     >>> v7.y, v7.z, v7.t
     (1.0, 2.0, 3.0)
 
-
 Dynamic attribute lookup failures::
 
     >>> v7.k
@@ -130,31 +129,28 @@ Dynamic attribute lookup failures::
     AttributeError: 'Vector' object has no attribute 'spam'
 
 
-Tests of preventing attributes from 'a' to 'z'::
+Tests of hashing::
 
-    >>> v1.x = 7
-    Traceback (most recent call last):
-      ...
-    AttributeError: readonly attribute 'x'
-    >>> v1.w = 7
-    Traceback (most recent call last):
-      ...
-    AttributeError: can't set attributes 'a' to 'z' in 'Vector'
+    >>> v1 = Vector([3, 4])
+    >>> v2 = Vector([3.1, 4.2])
+    >>> v3 = Vector([3, 4, 5])
+    >>> v6 = Vector(range(6))
+    >>> hash(v1), hash(v3), hash(v6)
+    (7, 2, 1)
 
-Other attributes can be set::
 
-    >>> v1.X = 'albatross'
-    >>> v1.X
-    'albatross'
-    >>> v1.ni = 'Ni!'
-    >>> v1.ni
-    'Ni!'
+Most hash codes of non-integers vary from a 32-bit to 64-bit CPython build::
+
+    >>> import sys
+    >>> hash(v2) == (384307168202284039 if sys.maxsize > 2**32 else 357915986)
+    True
 
 """
 
 from array import array
 import reprlib
 import math
+import functools
 import operator
 
 
@@ -180,7 +176,12 @@ class Vector:
                 bytes(self._components))
 
     def __eq__(self, other):
-        return tuple(self) == tuple(other)
+        return (len(self) == len(other) and
+                all(a == b for a, b in zip(self, other)))
+
+    def __hash__(self):
+        hashes = (hash(x) for x in self)
+        return functools.reduce(operator.xor, hashes, 0)
 
     def __abs__(self):
         return math.hypot(*self)
@@ -198,48 +199,18 @@ class Vector:
         index = operator.index(key)
         return self._components[index]
 
-# tag::VECTOR_V3_GETATTR[]
-    __match_args__ = ('x', 'y', 'z', 't')  # <1>
-    # Set __match_args__ to allow positional pattern matching
-    # on the dynamic attributes x, y, z, and t supported
-    # by __getattr__ below.   
+    __match_args__ = ('x', 'y', 'z', 't')
 
     def __getattr__(self, name):
-        
-        cls = type(self)  # <2>
-        #  Get the Vector class for later use.
-        try:
-            pos = cls.__match_args__.index(name)  # <3>
-            # Try to get the position of name in __match_args__.
-        except ValueError:  # <4>
-            # If name is not found in __match_args__, .index(name)
-            # raises ValueError and set pos to -1.
-            pos = -1
-        if 0 <= pos < len(self._components):  # <5>
-            # If the pos is within range of the available components,
-            # return the component at that position.
-            return self._components[pos]
-        msg = f'{cls.__name__!r} object has no attribute {name!r}'  # <6>
-        # If we get this far, raise AttributeError with a message.
-        raise AttributeError(msg)
-# end::VECTOR_V3_GETATTR[]
-
-# tag::VECTOR_V3_SETATTR[]
-    def __setattr__(self, name, value):
         cls = type(self)
-        if len(name) == 1:  # <1>
-            if name in cls.__match_args__:  # <2>
-                error = 'readonly attribute {attr_name!r}'
-            elif name.islower():  # <3>
-                error = "can't set attributes 'a' to 'z' in {cls_name!r}"
-            else:
-                error = ''  # <4>
-            if error:  # <5>
-                msg = error.format(cls_name=cls.__name__, attr_name=name)
-                raise AttributeError(msg)
-        super().__setattr__(name, value)  # <6>
-
-# end::VECTOR_V3_SETATTR[]
+        try:
+            pos = cls.__match_args__.index(name)
+        except ValueError:
+            pos = -1
+        if 0 <= pos < len(self._components):
+            return self._components[pos]
+        msg = f'{cls.__name__!r} object has no attribute {name!r}'
+        raise AttributeError(msg)
 
     @classmethod
     def frombytes(cls, octets):
