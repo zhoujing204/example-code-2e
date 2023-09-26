@@ -1,33 +1,33 @@
-r"""
-htmlize(): generic function example
+# r"""
+# htmlize(): generic function example
 
-# tag::HTMLIZE_DEMO[]
+# # tag::HTMLIZE_DEMO[]
 
->>> htmlize({1, 2, 3})  # <1>
-'<pre>{1, 2, 3}</pre>'
->>> htmlize(abs)
-'<pre>&lt;built-in function abs&gt;</pre>'
->>> htmlize('Heimlich & Co.\n- a game')  # <2>
-'<p>Heimlich &amp; Co.<br/>\n- a game</p>'
->>> htmlize(42)  # <3>
-'<pre>42 (0x2a)</pre>'
->>> print(htmlize(['alpha', 66, {3, 2, 1}]))  # <4>
-<ul>
-<li><p>alpha</p></li>
-<li><pre>66 (0x42)</pre></li>
-<li><pre>{1, 2, 3}</pre></li>
-</ul>
->>> htmlize(True)  # <5>
-'<pre>True</pre>'
->>> htmlize(fractions.Fraction(2, 3))  # <6>
-'<pre>2/3</pre>'
->>> htmlize(2/3)   # <7>
-'<pre>0.6666666666666666 (2/3)</pre>'
->>> htmlize(decimal.Decimal('0.02380952'))
-'<pre>0.02380952 (1/42)</pre>'
+# >>> htmlize({1, 2, 3})  # <1>
+# '<pre>{1, 2, 3}</pre>'
+# >>> htmlize(abs)
+# '<pre>&lt;built-in function abs&gt;</pre>'
+# >>> htmlize('Heimlich & Co.\n- a game')  # <2>
+# '<p>Heimlich &amp; Co.<br/>\n- a game</p>'
+# >>> htmlize(42)  # <3>
+# '<pre>42 (0x2a)</pre>'
+# >>> print(htmlize(['alpha', 66, {3, 2, 1}]))  # <4>
+# <ul>
+# <li><p>alpha</p></li>
+# <li><pre>66 (0x42)</pre></li>
+# <li><pre>{1, 2, 3}</pre></li>
+# </ul>
+# >>> htmlize(True)  # <5>
+# '<pre>True</pre>'
+# >>> htmlize(fractions.Fraction(2, 3))  # <6>
+# '<pre>2/3</pre>'
+# >>> htmlize(2/3)   # <7>
+# '<pre>0.6666666666666666 (2/3)</pre>'
+# >>> htmlize(decimal.Decimal('0.02380952'))
+# '<pre>0.02380952 (1/42)</pre>'
 
-# end::HTMLIZE_DEMO[]
-"""
+# # end::HTMLIZE_DEMO[]
+# """
 
 # tag::HTMLIZE[]
 

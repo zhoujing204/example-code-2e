@@ -37,7 +37,6 @@ def make_averager():
 
     return averager
 
-avg = make_averager()
-print(avg(10))
-print(avg(11))
-print(avg(12))
+
+
+
