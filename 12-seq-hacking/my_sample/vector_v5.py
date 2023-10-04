@@ -270,7 +270,7 @@ class Vector:
         if fmt_spec.endswith('h'):  # hyperspherical coordinates
             fmt_spec = fmt_spec[:-1]
             coords = itertools.chain([abs(self)],
-                                     self.angles())  # <4>
+                                    self.angles())  # <4>
             outer_fmt = '<{}>'  # <5>
         else:
             coords = self
