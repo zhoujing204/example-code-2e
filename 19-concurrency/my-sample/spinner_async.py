@@ -11,7 +11,8 @@ async def spin(msg: str) -> None:
             
             #2 Use await asyncio.sleep(.1) instead of done.wait(.1)
             # to pause without blocking other coroutines.
-            await asyncio.sleep(.1)
+            # await asyncio.sleep(.1)
+            pass
         
         #3 asyncio.CancelledError is raised when the cancle
         # method is called on the Task controlling this coroutine.
