@@ -9,6 +9,22 @@ import itertools
 import time
 from threading import Thread, Event
 
+import math
+
+def is_prime(n: int) -> bool:
+    if n < 2:
+        return False
+    if n == 2:
+        return True
+    if n % 2 == 0: 
+        return False
+    
+    root = math.isqrt(n)
+    for i in range(3, root + 1, 2):
+        if n % i == 0:
+            return False
+    return True
+
 def spin(msg: str, done: Event) -> None:  # <1>
     for char in itertools.cycle(r'\|/-'):  # <2>
         status = f'\r{char} {msg}'  # <3>
@@ -19,7 +35,8 @@ def spin(msg: str, done: Event) -> None:  # <1>
     print(f'\r{blanks}\r', end='')  # <6>
 
 def slow() -> int:
-    time.sleep(3)  # <7>
+    # time.sleep(3)  # <7>
+    is_prime(5_000_111_000_222_021)
     return 42
 # end::SPINNER_THREAD_TOP[]
 
