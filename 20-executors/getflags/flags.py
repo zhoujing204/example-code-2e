@@ -35,7 +35,7 @@ def save_flag(img: bytes, filename: str) -> None:     # <5>
 def get_flag(cc: str) -> bytes:  # <6>
     url = f'{BASE_URL}/{cc}/{cc}.gif'.lower()
     resp = httpx.get(url, timeout=6.1,       # <7>
-                     follow_redirects=True)  # <8>
+                    follow_redirects=True)   # <8>
     resp.raise_for_status()  # <9>
     return resp.content
 
