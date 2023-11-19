@@ -23,7 +23,7 @@ SERVERS = {
     'DELAY':  'http://localhost:8001/flags',
     'ERROR':  'http://localhost:8002/flags',
 }
-DEFAULT_SERVER = 'LOCAL'
+DEFAULT_SERVER = 'REMOTE'
 
 DEST_DIR = Path('downloaded')
 COUNTRY_CODES_FILE = Path('country_codes.txt')
@@ -153,3 +153,5 @@ def main(download_many, default_concur_req, max_concur_req):
     t0 = time.perf_counter()
     counter = download_many(cc_list, base_url, args.verbose, actual_req)
     final_report(cc_list, counter, t0)
+    
+
