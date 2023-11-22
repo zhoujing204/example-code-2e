@@ -33,15 +33,15 @@ MAX_CONCUR_REQ = 1000  # <3>
 
 
 def download_many(cc_list: list[str],
-                  base_url: str,
-                  verbose: bool,
-                  concur_req: int) -> Counter[DownloadStatus]:
+                    base_url: str,
+                    verbose: bool,
+                    concur_req: int) -> Counter[DownloadStatus]:
     counter: Counter[DownloadStatus] = Counter()
     with ThreadPoolExecutor(max_workers=concur_req) as executor:  # <4>
         to_do_map = {}  # <5>
         for cc in sorted(cc_list):  # <6>
             future = executor.submit(download_one, cc,
-                                     base_url, verbose)  # <7>
+                                        base_url, verbose)  # <7>
             to_do_map[future] = cc  # <8>
         done_iter = as_completed(to_do_map)  # <9>
         if not verbose:
