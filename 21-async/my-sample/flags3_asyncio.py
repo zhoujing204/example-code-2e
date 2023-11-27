@@ -22,8 +22,8 @@ DEFAULT_CONCUR_REQ = 5
 MAX_CONCUR_REQ = 1000
 
 async def get_flag(client: httpx.AsyncClient,  # <1>
-                   base_url: str,
-                   cc: str) -> bytes:
+                    base_url: str,
+                    cc: str) -> bytes:
     url = f'{base_url}/{cc}/{cc}.gif'.lower()
     resp = await client.get(url, timeout=3.1, follow_redirects=True)   # <2>
     resp.raise_for_status()
@@ -31,8 +31,8 @@ async def get_flag(client: httpx.AsyncClient,  # <1>
 
 # tag::FLAGS3_ASYNCIO_GET_COUNTRY[]
 async def get_country(client: httpx.AsyncClient,
-                      base_url: str,
-                      cc: str) -> str:    # <1>
+                        base_url: str,
+                        cc: str) -> str:    # <1>
     url = f'{base_url}/{cc}/metadata.json'.lower()
     resp = await client.get(url, timeout=3.1, follow_redirects=True)
     resp.raise_for_status()
@@ -42,14 +42,16 @@ async def get_country(client: httpx.AsyncClient,
 
 # tag::FLAGS3_ASYNCIO_DOWNLOAD_ONE[]
 async def download_one(client: httpx.AsyncClient,
-                       cc: str,
-                       base_url: str,
-                       semaphore: asyncio.Semaphore,
-                       verbose: bool) -> DownloadStatus:
+                        cc: str,
+                        base_url: str,
+                        semaphore: asyncio.Semaphore,
+                        verbose: bool) -> DownloadStatus:
     try:
         async with semaphore:  # <1>
+            print(f'semaphore counter: {semaphore._value}')
             image = await get_flag(client, base_url, cc)
         async with semaphore:  # <2>
+            print(f'semaphore counter: {semaphore._value}')
             country = await get_country(client, base_url, cc)
     except httpx.HTTPStatusError as exc:
         res = exc.response

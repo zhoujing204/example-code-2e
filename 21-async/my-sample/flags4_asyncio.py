@@ -22,35 +22,51 @@ DEFAULT_CONCUR_REQ = 5
 MAX_CONCUR_REQ = 1000
 
 async def get_flag(client: httpx.AsyncClient,  # <1>
-                   base_url: str,
-                   cc: str) -> bytes:
-    url = f'{base_url}/{cc}/{cc}.gif'.lower()
+                    base_url: str,
+                    cc: str) -> bytes:
+    url = f'{base_url}/{cc}.gif'.lower()
     resp = await client.get(url, timeout=3.1, follow_redirects=True)   # <2>
     resp.raise_for_status()
+    print(f'get_flag done: {cc}')
+    return resp.content
+
+
+async def get_flag2(client: httpx.AsyncClient,  # <1>
+                    base_url: str,
+                    cc: str) -> bytes:
+    url = f'{base_url}/{cc}.gif'.lower()
+    resp = await client.get(url, timeout=3.1, follow_redirects=True)   # <2>
+    resp.raise_for_status()
+    print(f'get_flag2 done: {cc}')
     return resp.content
 
 # tag::FLAGS3_ASYNCIO_GET_COUNTRY[]
-async def get_country(client: httpx.AsyncClient,
-                      base_url: str,
-                      cc: str) -> str:    # <1>
-    url = f'{base_url}/{cc}/metadata.json'.lower()
-    resp = await client.get(url, timeout=3.1, follow_redirects=True)
-    resp.raise_for_status()
-    metadata = resp.json()  # <2>
-    return metadata['country']  # <3>
+# async def get_country(client: httpx.AsyncClient,
+#                         base_url: str,
+#                         cc: str) -> str:    # <1>
+#     url = f'{base_url}/{cc}/metadata.json'.lower()
+#     resp = await client.get(url, timeout=3.1, follow_redirects=True)
+#     resp.raise_for_status()
+#     metadata = resp.json()  # <2>
+#     return metadata['country']  # <3>
 # end::FLAGS3_ASYNCIO_GET_COUNTRY[]
 
 # tag::FLAGS3_ASYNCIO_DOWNLOAD_ONE[]
 async def download_one(client: httpx.AsyncClient,
-                       cc: str,
-                       base_url: str,
-                       semaphore: asyncio.Semaphore,
-                       verbose: bool) -> DownloadStatus:
+                        cc: str,
+                        base_url: str,
+                        semaphore: asyncio.Semaphore,
+                        verbose: bool) -> DownloadStatus:
+    # sourcery skip: remove-unnecessary-else, swap-if-else-branches
     try:
         async with semaphore:  # <1>
+            print(f'semaphore counter: {semaphore._value}; country code:{cc}')
             image = await get_flag(client, base_url, cc)
+            # print(f'semaphore counter2: {semaphore._value}; country code:{cc}')
+            # image2 = await get_flag(client, base_url, cc)
         async with semaphore:  # <2>
-            country = await get_country(client, base_url, cc)
+            print(f'semaphore counter2: {semaphore._value}; country code:{cc}')
+            image2 = await get_flag2(client, base_url, cc)
     except httpx.HTTPStatusError as exc:
         res = exc.response
         if res.status_code == HTTPStatus.NOT_FOUND:
@@ -58,13 +74,16 @@ async def download_one(client: httpx.AsyncClient,
             msg = f'not found: {res.url}'
         else:
             raise
-    else:
-        filename = country.replace(' ', '_')  # <3>
-        await asyncio.to_thread(save_flag, image, f'{filename}.gif')
+    else: 
         status = DownloadStatus.OK
-        msg = 'OK'
-    if verbose and msg:
-        print(cc, msg)
+        msg = 'OK'               
+        await asyncio.to_thread(save_flag, image, f'{cc}.gif')
+        print(f'{cc}, {msg}')
+        await asyncio.to_thread(save_flag, image2, f'{cc}2.gif')
+        print(f'{cc}2, {msg}')
+
+    # if verbose and msg:
+    #     print(cc, msg)
     return status
 # end::FLAGS3_ASYNCIO_DOWNLOAD_ONE[]
 
@@ -94,14 +113,17 @@ async def supervisor(cc_list: list[str],
                 error = exc  # <10>
             except KeyboardInterrupt:
                 break
-
+            
+            
             if error:
                 status = DownloadStatus.ERROR  # <11>
                 if verbose:
                     url = str(error.request.url)  # <12>
                     cc = Path(url).stem.upper()   # <13>
                     print(f'{cc} error: {error_msg}')
+                    
             counter[status] += 1
+            print(f'counter: {counter}')
 
     return counter
 
