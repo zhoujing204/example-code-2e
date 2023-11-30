@@ -62,11 +62,11 @@ async def download_one(client: httpx.AsyncClient,
         async with semaphore:  # <1>
             print(f'semaphore counter: {semaphore._value}; country code:{cc}')
             image = await get_flag(client, base_url, cc)
-            # print(f'semaphore counter2: {semaphore._value}; country code:{cc}')
-            # image2 = await get_flag(client, base_url, cc)
-        async with semaphore:  # <2>
             print(f'semaphore counter2: {semaphore._value}; country code:{cc}')
-            image2 = await get_flag2(client, base_url, cc)
+            image2 = await get_flag(client, base_url, cc)
+        # async with semaphore:  # <2>
+        #     print(f'semaphore counter2: {semaphore._value}; country code:{cc}')
+        #     image2 = await get_flag2(client, base_url, cc)
     except httpx.HTTPStatusError as exc:
         res = exc.response
         if res.status_code == HTTPStatus.NOT_FOUND:
